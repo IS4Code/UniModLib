@@ -50,7 +50,7 @@ local function coresume(co)
   end
 end
 
---Runs task with sleep support as task(sleepfunc, ...)
+--Runs a task with sleep support as task(sleepfunc, ...)
 function timed.runtask(task, ...)
   local t = {...}
   local co = coroutine.create(function()task(sleep, unpack(t))end)
