@@ -2,6 +2,7 @@
 local bit = {}
 local env = require("env")
 local memory = require("memory")
+local err = require("errors")
 
 bit.And = env.bitAnd
 bit.Or = env.bitOr

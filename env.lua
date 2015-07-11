@@ -33,6 +33,8 @@ setmetatable(env, {
   __newindex = function(self, idx, value)
     --rawset(self, idx, value)
     _G[idx] = value
+    server[idx] = value
+    client[idx] = value
   end
 })
 return env

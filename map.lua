@@ -1,12 +1,17 @@
 --Map manipulation by IllidanS4
 local map = {}
 local env = require("env")
+local err = require("errors")
 
 function map.settile(x, y, tile, var, a, b)
+  err.check("number", x, 1)
+  err.check("number", y, 2)
   env.tileSet(x, y, {tile, var, a, b})
 end
 
 function map.gettile(x, y)
+  err.check("number", x, 1)
+  err.check("number", y, 2)
   return unpack(env.tileGet(x, y))
 end
 
@@ -27,10 +32,14 @@ function map.tilename(tile)
 end
 
 function map.getwall(x, y)
+  err.check("number", x, 1)
+  err.check("number", y, 2)
   return env.mapGet(x, y)
 end
 
 function map.setwall(tile, x, y, dir, flags, vari, unk3, hp)
+  err.check("number", x, 1)
+  err.check("number", y, 2)
   return env.mapSet(tile, x, y, dir, flags, vari, unk3, hp)
 end
 
@@ -39,10 +48,16 @@ function map.wallinfo(wall)
 end
 
 function map.removewall(x, y)
+  err.check("number", x, 1)
+  err.check("number", y, 2)
   env.mapDel(x, y)
 end
 
 function map.cangetto(x1, y1, x2, y2)
+  err.check("number", x1, 1)
+  err.check("number", y1, 2)
+  err.check("number", x2, 3)
+  err.check("number", y2, 4)
   return env.mapTraceRay(x1, y1, x2, y2)
 end
 
@@ -51,6 +66,7 @@ function map.getname()
 end
 
 function map.change(name)
+  err.check("string", name, 1)
   env.formGame(name)
 end
 

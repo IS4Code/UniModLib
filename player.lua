@@ -1,9 +1,11 @@
---Player library by IllidanS4.
+--Player library by IllidanS4
 local player = {}
 local memory = require("memory")
 local env = require("env")
 local events = require("events")
 local unit = require("unit")
+local game = require("game")
+local err = require("errors")
 
 local plrmt = {__index = function(self, idx) return rawget(player, idx) or rawget(unit, idx) end, __tostring = function(self)return player.getname(self)end}
 local function plrtable(plr)
@@ -13,6 +15,20 @@ local function plrtable(plr)
     return plr
   end
 end
+
+local function isplayer(plr)
+  if type(data) == "userdata" then
+    return unit.isunit(plr) and env.playerScore(plr) ~= nil
+  elseif type(data) == "table" then
+    return getmetatable(plr) == plrmt and isplayer(plr.data)
+  end
+  return false
+end
+
+local checker = err.checker(isplayer, "player")
+
+player.isplayer = isplayer
+player.checker = checker
 
 player.getplayer = plrtable
 player.getdata = unit.getdata
@@ -34,19 +50,26 @@ function player.getbylogin(login)
 end
 
 function player.getscore(data)
+  err.check(checker, data, 1)
   return env.playerScore(player.getdata(data))
 end
 
 function player.setscore(data, score)
+  err.check(checker, data, 1)
+  err.check("number", score, 2)
   env.playerScore(player.getdata(data), score)
 end
 
 function player.lookat(plr, obj)
+  err.check(checker, plr, 1)
+  err.check(unit.checker, obj, 2)
   env.playerLook(player.getdata(plr), unit.getdata(obj))
 end
 
 function player.setteam(plr, team)
+  err.check(checker, plr, 1)
   local team = require("team")
+  err.check(team.checker, team, 2)
   env.teamAssign({team=team.getdata(team), player = player.getdata(plr)})
 end
 
@@ -56,48 +79,65 @@ local function plrinfo(plr, field)
 end
 
 function player.getteam(plr)
+  err.check(checker, plr, 1)
   local team = require("team")
   return team.getteam(plrinfo(plr, "teamId"))
 end
 
 function player.getping(plr)
+  err.check(checker, plr, 1)
   return plrinfo(plr, "ping")
 end
 
 function player.isobserver(plr)
+  err.check(checker, plr, 1)
   return plrinfo(plr, "isObserver")
 end
 
 function player.getname(plr)
+  err.check(checker, plr, 1)
   return plrinfo(plr, "name")
 end
 
 function player.getwol(plr)
+  err.check(checker, plr, 1)
   return plrinfo(plr, "wol")
 end
 
 function player.getid(plr)
+  err.check(checker, plr, 1)
   return plrinfo(plr, "idx")
 end
 
 function player.getip(plr)
+  err.check(checker, plr, 1)
   return plrinfo(plr, "ip")
 end
 
 function player.getclass(plr)
+  err.check(checker, plr, 1)
   return plrinfo(plr, "className")
 end
 
 function player.getnetcode(plr)
+  err.check(checker, plr, 1)
   return plrinfo(plr, "netcode")
 end
 
 function player.getlogin(plr)
+  err.check(checker, plr, 1)
   return plrinfo(plr, "login")
 end
 
 function player.kick(plr)
+  err.check(checker, plr, 1)
   playerKickUdata(player.getdata(plr))
+end
+
+function player.ban(plr)
+  err.check(checker, plr, 1)
+  local name = player.getname(plr)
+  game.exec('ban "'..name..'"')
 end
 
 local function classicevent(callback, list, event, func)
@@ -109,31 +149,38 @@ end
 
 local joinevents = events.newlist()
 function player.onjoin(callback)
+  err.check("function", callback, 1)
   classicevent(callback, joinevents, "playerOnJoin")
 end
 
 local leaveobsevents = events.newlist()
 function player.onleaveobserver(callback)
+  err.check("function", callback, 1)
   classicevent(callback, leaveobsevents, "playerOnLeaveObs")
 end
 
 local goobsevents = events.newlist()
 function player.ongoobserver(callback)
+  err.check("function", callback, 1)
   classicevent(callback, goobsevents, "playerOnGoObs")
 end
 
 local dieevents = events.newlist()
 function player.ondie(callback)
+  err.check("function", callback, 1)
   classicevent(callback, dieevents, "playerOnDie")
 end
 
 local leaveevents = events.newlist()
 function player.onleave(callback)
+  err.check("function", callback, 1)
   classicevent(callback, leaveevents, "playerOnleave")
 end
 
 local inputevents = {}
 function player.oninput(plr, callback)
+  err.check(checker, plr, 1)
+  err.check("function", callback, 2)
   plr = player.getdata(plr)
   inputevents[plr] = inputevents[plr] or events.newlist()
   inputevents[plr]:insert(callback)
@@ -152,6 +199,7 @@ local function onconsole(text, color)
 end
 
 function player.onchat(callback)
+  err.check("function", callback, 1)
   local game = require("game")
   chatevents:insert(callback)
   if onconsole then
@@ -165,10 +213,6 @@ local function ondie(plr)
   local timed = require("timed")
   local int
   int = timed.setinterval(function()
-    --[[print(pcall(function()
-      local hp = plr:gethp()
-      print("test", hp)
-    end))]]
     if plr:gethp() > 0 then
       timed.clearinterval(int)
       events.invoke(spawnevents, plr)
@@ -176,6 +220,7 @@ local function ondie(plr)
   end, 10)
 end
 function player.onspawn(callback)
+  err.check("function", callback, 1)
   spawnevents:insert(callback)
   if ondie then
     player.ondie(ondie)
@@ -198,7 +243,7 @@ local function index(self, idx)
     return rawget(self, idx) or unit[idx]
   end
 end
-local function roerror(idx) error("Field '"..idx.."' is read-only.") end
+local function roerror(idx) err.readonly(idx, "player") end
 local function newindex(self, idx, value)
   if idx == "list" then
     roerror(idx)

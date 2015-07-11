@@ -1,6 +1,7 @@
 --Memory management by IllidanS4
 local memory = {}
 local env = require("env")
+local err = require("errors")
 
 --Allocates a block of memory of size 'size'.
 memory.alloc = env.memAlloc --function(size)
@@ -17,6 +18,7 @@ memory.getfloat = env.getPtrFloat --function(ptr, offset)
 memory.setfloat = env.setPtrFloat --function(ptr, offset, value)
 memory.getptr = env.getPtrPtr --function(ptr, offset)
 memory.setptr = env.setPtrPtr --function(ptr, offset, value)
+memory.call = env.ptrCall2 --function(ptr, arg1, arg2)
 memory.sizes = {byte=1,short=2,int=4,float=4,ptr=4}
 
 --Returns a block of memory in a form of a table of bytes
@@ -83,6 +85,7 @@ end
 
 --Calls a specified function, passing a pointer as the first argument, stores the result, frees the pointer, and then returns the result
 function memory.callandfree(func, ptr, ...)
+  err.check("function", func, 1)
   local res = func(ptr, ...)
   memory.free(ptr)
   return res
